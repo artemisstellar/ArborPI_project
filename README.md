@@ -54,7 +54,9 @@ sleep(2)
 for filename in capture(cam, f"{base_folder}/image_{counter:03d}.jpg"):
     print(f'Captured {filename}')
     sleep(20) # wait 5 minutes
-    
+
+from datetime import datetime, timedelta
+from time import sleep
 
 # Create a `datetime` variable to store the start time
 start_time = datetime.now()
@@ -67,4 +69,3 @@ while (now_time < start_time + timedelta(minutes=175)):
     sleep(1)
     # Update the current time
     now_time = datetime.now()
-
