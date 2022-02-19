@@ -49,12 +49,6 @@ for filename in capture(cam, f"{base_folder}/image_{counter:03d}.jpg"):
     sleep(20) # wait 5 minutes
 
 
-sleep(2)
-
-for filename in capture(cam, f"{base_folder}/image_{counter:03d}.jpg"):
-    print(f'Captured {filename}')
-    sleep(20) # wait 5 minutes
-
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -69,3 +63,13 @@ while (now_time < start_time + timedelta(minutes=175)):
     sleep(1)
     # Update the current time
     now_time = datetime.now()
+
+import reverse_geocoder
+from orbit import ISS
+
+coordinates = ISS.coordinates()
+coordinate_pair = (
+    coordinates.latitude.degrees,
+    coordinates.longitude.degrees)
+location = reverse_geocoder.search(coordinate_pair)
+print(location)
