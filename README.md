@@ -1,12 +1,28 @@
 # ArborPI_project
-ArborPI team of Astro PI programm
+from datetime import datetime, timedelta
+from time import sleep
 from orbit import ISS
 from picamera import PiCamera
 from pathlib import Path
-from time import sleep
-from datetime import datetime, timedelta
+import csv
 
 start_time = datetime.now()
+
+base_folder = Path(__file__).parent.resolve()
+data_file = base_folder/'data.csv'
+
+imagecounter = 0
+
+
+def create_csv(data_file):
+    with open(data_file, 'w') as f:
+        writer = csv.writer(f)
+        header = ("image", "time/time", "latitude", "longitude", "elevation")
+        writer.writerow(header)
+
+
+create_csv(data_file)
+
 
 def convert(angle):
     """
@@ -18,53 +34,49 @@ def convert(angle):
     with the boolean indicating if the angle is negative.
     """
     sign, degrees, minutes, seconds = angle.signed_dms()
-    exif_angle = f'{degrees:.0f}/1,{minutes:.0f}/1,{seconds*10:.0f}/10'
+    exif_angle = f'{degrees:.0f}/1,{minutes:.0f}/1,{seconds * 10:.0f}/10'
     return sign < 0, exif_angle
 
+
 def capture(camera, image):
+
+    def add_csv_data(data_file, data):
+        with open(data_file, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(data)
+
     """Use `camera` to capture an `image` file with lat/long EXIF data."""
     point = ISS.coordinates()
-
-    coordinate_pair = (
-        point.latitude.degrees,
-        point.longitude.degrees)
-
-    elevationList = reverse_geocoder.search(coordinate_pair, mode=1)
-    townList = reverse_geocoder.search(coordinate_pair, mode=1)
-
-    elevation[15] = elevationList
-    town[1] = townList
 
     # Convert the latitude and longitude to EXIF-appropriate representations
     south, exif_latitude = convert(point.latitude)
     west, exif_longitude = convert(point.longitude)
 
+    # Set the EXIF tags specifying the current location
     camera.exif_tags['GPS.GPSLatitude'] = exif_latitude
     camera.exif_tags['GPS.GPSLatitudeRef'] = "S" if south else "N"
     camera.exif_tags['GPS.GPSLongitude'] = exif_longitude
     camera.exif_tags['GPS.GPSLongitudeRef'] = "W" if west else "E"
-    camera.exif_tags['elevation'] = elevation
-    camera.exif_tags['nearestTown'] = town
-
+    camera.exif_tags['GPS.GPSElevation'] = point.elevation.km
 
     # Capture the image
     camera.capture(image)
 
-base_folder = Path(__file__).parent.resolve()
+    data_file = base_folder/'data.csv'
+
+    row = (image, datetime.now(), point.latitude, point.longitude, point.elevation.km)
+    add_csv_data(data_file, row)
+
 
 cam = PiCamera()
-cam.resolution = (1296,972)
-camera.start_preview()
-sleep(2)
+cam.resolution = (1296, 972)
 
 now_time = datetime.now()
 
 while (now_time < start_time + timedelta(minutes=175)):
-    for filename in capture(cam, f"{base_folder}/image_{counter:03d}.jpg"):
-        print(f'Captured {filename}')
-        sleep(21) # wait 5 minutes
-        now_time = datetime.now()
 
+    imagecounter = imagecounter + 1
+    capture(cam, f"{base_folder}/gps{imagecounter}.jpg")
+    sleep(10)
 
-
-
+    now_time = datetime.now()
