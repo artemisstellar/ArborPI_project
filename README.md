@@ -73,3 +73,21 @@ coordinate_pair = (
     coordinates.longitude.degrees)
 location = reverse_geocoder.search(coordinate_pair)
 print(location)
+
+
+
+
+
+
+
+ point = ISS.coordinates()
+
+    coordinate_pair = (
+        point.latitude.degrees,
+        point.longitude.degrees)
+
+    elevationList = reverse_geocoder.search(coordinate_pair, mode=1)
+    townList = reverse_geocoder.search(coordinate_pair, mode=1)
+
+    elevation[15] = elevationList
+    town[1] = townList
