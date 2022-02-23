@@ -6,23 +6,16 @@ from picamera import PiCamera
 from pathlib import Path
 import csv
 
-start_time = datetime.now()
-
-base_folder = Path(__file__).parent.resolve()
-data_file = base_folder/'data.csv'
-
-imagecounter = 0
-
-
 def create_csv(data_file):
     with open(data_file, 'w') as f:
         writer = csv.writer(f)
         header = ("image", "time/time", "latitude", "longitude", "elevation")
         writer.writerow(header)
-
-
-create_csv(data_file)
-
+        
+def add_csv_data(data_file, data):
+        with open(data_file, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(data)
 
 def convert(angle):
     """
@@ -37,13 +30,7 @@ def convert(angle):
     exif_angle = f'{degrees:.0f}/1,{minutes:.0f}/1,{seconds * 10:.0f}/10'
     return sign < 0, exif_angle
 
-
 def capture(camera, image):
-
-    def add_csv_data(data_file, data):
-        with open(data_file, 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow(data)
 
     """Use `camera` to capture an `image` file with lat/long EXIF data."""
     point = ISS.coordinates()
@@ -62,21 +49,32 @@ def capture(camera, image):
     # Capture the image
     camera.capture(image)
 
-    data_file = base_folder/'data.csv'
-
-    row = (image, datetime.now(), point.latitude, point.longitude, point.elevation.km)
-    add_csv_data(data_file, row)
-
+base_folder = Path(__file__).parent.resolve()
 
 cam = PiCamera()
 cam.resolution = (1296, 972)
 
+data_file = base_folder/'data.csv'
+create_csv(data_file)
+
+imagecounter = 1
+
+start_time = datetime.now()
 now_time = datetime.now()
 
-while (now_time < start_time + timedelta(minutes=175)):
+while (now_time < start_time + timedelta(minutes=177)):
 
-    imagecounter = imagecounter + 1
-    capture(cam, f"{base_folder}/gps{imagecounter}.jpg")
-    sleep(10)
-
+    point = ISS.coordinates()
+    
+    row = (imagecounter, datetime.now(), point.latitude, point.longitude, point.elevation.km)
+    add_csv_data(data_file, row)-
+    
+    image_name = f"{base_folder}/gps{imagecounter}.jpg"
+    capture(cam, image_name)
+    
+    imagecounter += 1
+ 
+    sleep(30)
+    # Update the current time
     now_time = datetime.now()
+    
